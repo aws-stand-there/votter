@@ -6,12 +6,9 @@ import Header from "./header";
 // Code-splitting is automated for routes
 import Home from "../routes/home";
 import Profile from "../routes/profile";
+import CreateForm from "../routes/create";
 
 export default class App extends Component {
-  /** Gets fired when the route changes.
-   *	@param {Object} event		"change" event from [preact-router](http://git.io/preact-router)
-   *	@param {string} event.url	The newly routed URL
-   */
   handleRoute = (e) => {
     this.currentUrl = e.url;
   };
@@ -22,6 +19,7 @@ export default class App extends Component {
         <Header />
         <Router onChange={this.handleRoute}>
           <Home path="/" />
+          <CreateForm path="/create" />
           <Profile path="/profile/" user="me" />
           <Profile path="/profile/:user" />
         </Router>
