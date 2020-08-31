@@ -1,22 +1,13 @@
 import React, { useState, useCallback } from "react";
-import {
-  Row,
-  Col,
-  Card,
-  Form,
-  Input,
-  Typography,
-  Checkbox,
-  DatePicker,
-  Button,
-  Space,
-} from "antd";
+import { Row, Col, Card, Form, Input, Typography, Button, message } from "antd";
 import moment from "moment";
 import "moment/locale/ko";
 import VoteOptionList from "../components/VoteOptionList";
 import { produce } from "immer";
 import { nanoid } from "nanoid";
 import { useForm } from "antd/lib/form/Form";
+import firebase from "firebase";
+import { useHistory, useLocation } from "react-router-dom";
 
 moment.locale("ko");
 
@@ -32,8 +23,13 @@ const getTitleRecommend = () =>
   ];
 
 function CreatePage() {
-  const [title, setTitle] = useState("");
+  const history = useHistory();
+  const location = useLocation();
+
   const [titleRecommend] = useState(getTitleRecommend());
+
+  const [title, setTitle] = useState("");
+  const [desc, setDesc] = useState("");
   const [options, setOptions] = useState([]);
 
   const [form] = useForm();
@@ -44,6 +40,7 @@ function CreatePage() {
         draft.push({
           id: nanoid(),
           text: "",
+          count: 0,
         });
       })
     );
@@ -83,12 +80,39 @@ function CreatePage() {
     [options]
   );
 
+  const handleSubmit = async () => {
+    const optionsObject = {};
+    for (let index = 0; index < options.length; index++) {
+      const option = options[index];
+      optionsObject[option.id] = {
+        ...option,
+        index,
+      };
+    }
+
+    const vote = await firebase.firestore().collection("votes").add({
+      title,
+      desc,
+      options: optionsObject,
+      count: 0,
+    });
+
+    message.success(`투표하기: ${window.location.href}votes/${vote.id}`, 5000);
+
+    history.push(`/results/${vote.id}`);
+  };
+
   return (
-    <Row justify="center" style={{ marginTop: 32 }}>
+    <Row justify="center" style={{ paddingTop: 32 }}>
       <Col span={24} lg={10}>
         <Card>
           <Typography.Title level={2}>새 투표 📥</Typography.Title>
-          <Form form={form} layout="vertical" scrollToFirstError>
+          <Form
+            form={form}
+            layout="vertical"
+            scrollToFirstError
+            onFinish={handleSubmit}
+          >
             <Form.Item
               name="title"
               label="제목"
@@ -113,6 +137,8 @@ function CreatePage() {
             </Form.Item>
             <Form.Item label="설명">
               <Input.TextArea
+                value={desc}
+                onChange={(e) => setDesc(e.target.value)}
                 size="large"
                 placeholder="투표에 대한 설명을 자유롭게 적어주세요. ✍🏻"
               />
@@ -124,19 +150,6 @@ function CreatePage() {
                 onChange={handleChangeOption}
                 onDragEnd={handleDragEnd}
               />
-            </Form.Item>
-            <Form.Item label="마감 시간">
-              <DatePicker
-                showTime
-                placeholder="날짜와 시간을 선택해주세요"
-                locale="ko"
-              />
-            </Form.Item>
-            <Form.Item label="옵션">
-              <Space direction="vertical">
-                <Checkbox>응답을 복수 선택할 수 있습니다</Checkbox>
-                <Checkbox>투표 결과를 공개합니다</Checkbox>
-              </Space>
             </Form.Item>
             <Row justify="end">
               <Button type="primary" size="large" htmlType="submit">
