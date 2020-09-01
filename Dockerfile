@@ -4,7 +4,7 @@ RUN mkdir /votter
 
 WORKDIR /votter
 
-ADD ["craco.config.js", "yarn.lock", "package.json", "./"]
+ADD ["craco.config.js", ".env", "yarn.lock", "package.json", "./"]
 ADD ./src /votter/src
 ADD ./public /votter/public
 RUN env
